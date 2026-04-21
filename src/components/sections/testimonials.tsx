@@ -44,6 +44,8 @@ const LOGOS = [
 
 export function TestimonialsSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const scrollTweenRef = useRef<gsap.core.Tween | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   useGSAP(
@@ -70,26 +72,28 @@ export function TestimonialsSection() {
             y: 0,
             duration: 0.7,
             ease: 'expo.out',
-            stagger: 0.1,
+            stagger: 0.15,
           });
         },
         once: true,
       });
 
-      gsap.from('.logos-section', {
-        opacity: 0,
-        y: 20,
-        duration: 0.7,
-        ease: 'expo.out',
-        scrollTrigger: {
-          trigger: '.logos-section',
-          start: 'top 90%',
-          once: true,
-        },
+      // Infinite logo scroll
+      const track = trackRef.current;
+      if (!track) return;
+
+      scrollTweenRef.current = gsap.to(track, {
+        x: '-50%',
+        duration: 20,
+        ease: 'none',
+        repeat: -1,
       });
     },
     { scope: sectionRef }
   );
+
+  const pauseScroll = () => scrollTweenRef.current?.pause();
+  const resumeScroll = () => scrollTweenRef.current?.resume();
 
   return (
     <section ref={sectionRef} className="py-24 lg:py-32 bg-aura-950">
@@ -97,9 +101,7 @@ export function TestimonialsSection() {
         {/* Header */}
         <div className="testimonials-header text-center mb-16">
           <Eyebrow className="mb-4">Customer stories</Eyebrow>
-          <h2 className="text-h1 text-zinc-50 mt-6">
-            What teams say after the first quarter.
-          </h2>
+          <h2 className="text-h1 text-zinc-50 mt-6">What teams say after the first quarter.</h2>
         </div>
 
         {/* Testimonials grid */}
@@ -110,7 +112,6 @@ export function TestimonialsSection() {
               className="testimonial-card relative"
               style={prefersReducedMotion ? {} : { opacity: 0, transform: 'translateY(30px)' }}
             >
-              {/* Left border accent */}
               <div
                 className="rounded-xl p-7 border border-aura-700 h-full flex flex-col"
                 style={{
@@ -119,31 +120,50 @@ export function TestimonialsSection() {
                   borderRadius: '0 14px 14px 0',
                 }}
               >
-                <blockquote className="text-body-lg text-zinc-100 italic leading-relaxed flex-1 mb-6">
-                  "{t.quote}"
+                <blockquote className="text-body-lg text-zinc-100 italic leading-relaxed flex-1 mb-6 relative">
+                  &ldquo;{t.quote}&rdquo;
+                  {/* Quote underline — scaleX reveal on scroll via CSS, backed by the batch */}
+                  <span
+                    className="absolute bottom-0 left-0 h-px w-full origin-left"
+                    style={{
+                      background: 'linear-gradient(90deg, rgba(0,229,255,0.4), transparent)',
+                    }}
+                    aria-hidden="true"
+                  />
                 </blockquote>
 
                 <div className="border-t border-aura-700 pt-4">
                   <p className="text-small font-semibold text-zinc-50">{t.name}</p>
                   <p className="text-small text-zinc-500">
-                    {t.title} · {t.company}
+                    {t.title} &middot; {t.company}
                   </p>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Logos section */}
-        <div className="logos-section border-t border-aura-700 pt-12">
-          <p className="text-small text-zinc-500 text-center mb-8 uppercase tracking-widest">
-            Trusted by teams at
-          </p>
-          <div className="flex items-center justify-center flex-wrap gap-8 lg:gap-12">
-            {LOGOS.map((logo) => (
+      {/* Infinite logo scroll — full bleed */}
+      <div className="border-t border-aura-700 pt-12">
+        <p className="text-small text-zinc-500 text-center mb-8 uppercase tracking-widest px-6">
+          Trusted by teams at
+        </p>
+        <div
+          className="overflow-hidden"
+          onMouseEnter={prefersReducedMotion ? undefined : pauseScroll}
+          onMouseLeave={prefersReducedMotion ? undefined : resumeScroll}
+        >
+          <div
+            ref={trackRef}
+            className="flex items-center gap-12 lg:gap-16"
+            style={{ width: 'max-content' }}
+          >
+            {/* Original + duplicate for seamless loop */}
+            {[...LOGOS, ...LOGOS].map((logo, i) => (
               <span
-                key={logo}
-                className="text-body font-semibold text-zinc-600 hover:text-zinc-400 transition-colors duration-150 cursor-default"
+                key={`${logo}-${i}`}
+                className="text-body font-semibold text-zinc-600 hover:text-zinc-400 transition-colors duration-150 cursor-default whitespace-nowrap px-2"
               >
                 {logo}
               </span>

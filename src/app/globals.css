@@ -202,3 +202,13 @@ body {
     animation: none;
   }
 }
+
+/* ───── Shimmer sweep ───── */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+.animate-shimmer {
+  animation: shimmer-sweep 0.8s ease-in-out;
+}

@@ -8,9 +8,12 @@ interface Node {
   y: number;
   vx: number;
   vy: number;
+  baseVx: number;
+  baseVy: number;
   radius: number;
   alpha: number;
-  alphaSpeed: number;
+  alphaDir: number;
+  pulsePhase: number;
 }
 
 export function HeroCanvas() {
@@ -22,76 +25,93 @@ export function HeroCanvas() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    if (prefersReducedMotion) {
-      // Static dark background — no animation
-      ctx.fillStyle = '#09090B';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
+    if (prefersReducedMotion) return;
 
     const isMobile = window.innerWidth < 768;
-    const NODE_COUNT = isMobile ? 30 : 70;
-    const CONNECTION_RADIUS = isMobile ? 120 : 150;
-    const CYAN = { r: 0, g: 229, b: 255 };
+    const NODE_COUNT = isMobile ? 32 : 72;
+    const CONNECTION_RADIUS = isMobile ? 120 : 155;
+    const MOUSE_RADIUS = 110;
 
     let width = 0;
     let height = 0;
     let nodes: Node[] = [];
+    let tick = 0;
 
     function resize() {
-      width = canvas!.width = canvas!.offsetWidth;
-      height = canvas!.height = canvas!.offsetHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = canvas!.offsetWidth;
+      height = canvas!.offsetHeight;
+      canvas!.width = width * dpr;
+      canvas!.height = height * dpr;
+      ctx!.scale(dpr, dpr);
     }
 
-    function createNodes() {
-      nodes = Array.from({ length: NODE_COUNT }, () => ({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        radius: Math.random() * 1.5 + 1.5,
-        alpha: Math.random() * 0.5 + 0.3,
-        alphaSpeed: (Math.random() - 0.5) * 0.004,
-      }));
+    function spawnNodes() {
+      nodes = Array.from({ length: NODE_COUNT }, () => {
+        const speed = 0.08 + Math.random() * 0.18;
+        const angle = Math.random() * Math.PI * 2;
+        return {
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          baseVx: Math.cos(angle) * speed,
+          baseVy: Math.sin(angle) * speed,
+          radius: 1.5 + Math.random() * 1.8,
+          alpha: 0.3 + Math.random() * 0.5,
+          alphaDir: Math.random() > 0.5 ? 1 : -1,
+          pulsePhase: Math.random() * Math.PI * 2,
+        };
+      });
     }
 
     function draw() {
+      tick++;
       ctx!.clearRect(0, 0, width, height);
 
       const mx = mouseRef.current.x;
       const my = mouseRef.current.y;
 
+      // Update nodes
       for (const node of nodes) {
-        // Mouse repulsion
         const dx = node.x - mx;
         const dy = node.y - my;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const INFLUENCE = 100;
+        const distSq = dx * dx + dy * dy;
+        const dist = Math.sqrt(distSq);
 
-        if (dist < INFLUENCE && dist > 0) {
-          const force = (1 - dist / INFLUENCE) * (1 - dist / INFLUENCE);
-          node.x += (dx / dist) * force * 0.5;
-          node.y += (dy / dist) * force * 0.5;
+        // Repulsion near cursor
+        if (dist < MOUSE_RADIUS && dist > 1) {
+          const force = Math.pow(1 - dist / MOUSE_RADIUS, 2) * 0.7;
+          node.vx += (dx / dist) * force;
+          node.vy += (dy / dist) * force;
         }
 
-        // Drift
+        // Drift back toward base velocity
+        node.vx += (node.baseVx - node.vx) * 0.03;
+        node.vy += (node.baseVy - node.vy) * 0.03;
+
+        // Max speed clamp
+        const spd = Math.sqrt(node.vx * node.vx + node.vy * node.vy);
+        if (spd > 1.5) {
+          node.vx = (node.vx / spd) * 1.5;
+          node.vy = (node.vy / spd) * 1.5;
+        }
+
         node.x += node.vx;
         node.y += node.vy;
 
-        // Bounce off edges
-        if (node.x < 0 || node.x > width) node.vx *= -1;
-        if (node.y < 0 || node.y > height) node.vy *= -1;
-        node.x = Math.max(0, Math.min(width, node.x));
-        node.y = Math.max(0, Math.min(height, node.y));
+        // Wrap edges (instead of bounce — more fluid)
+        if (node.x < -20) node.x = width + 20;
+        else if (node.x > width + 20) node.x = -20;
+        if (node.y < -20) node.y = height + 20;
+        else if (node.y > height + 20) node.y = -20;
 
-        // Alpha drift
-        node.alpha += node.alphaSpeed;
-        if (node.alpha > 0.8 || node.alpha < 0.2) node.alphaSpeed *= -1;
-        node.alpha = Math.max(0.2, Math.min(0.8, node.alpha));
+        // Pulse alpha
+        node.pulsePhase += 0.012;
+        node.alpha = 0.35 + Math.sin(node.pulsePhase) * 0.25;
       }
 
       // Draw connections
@@ -102,10 +122,19 @@ export function HeroCanvas() {
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < CONNECTION_RADIUS) {
-            const opacity = (1 - dist / CONNECTION_RADIUS) * 0.35;
+            const t = 1 - dist / CONNECTION_RADIUS;
+            // Stronger connection near cursor
+            const midX = (nodes[i].x + nodes[j].x) / 2;
+            const midY = (nodes[i].y + nodes[j].y) / 2;
+            const mdx = midX - mx;
+            const mdy = midY - my;
+            const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+            const boostFactor = mDist < MOUSE_RADIUS ? 1 + (1 - mDist / MOUSE_RADIUS) * 1.2 : 1;
+
+            const opacity = t * t * 0.4 * boostFactor;
             ctx!.beginPath();
-            ctx!.strokeStyle = `rgba(${CYAN.r}, ${CYAN.g}, ${CYAN.b}, ${opacity})`;
-            ctx!.lineWidth = 0.8;
+            ctx!.strokeStyle = `rgba(0,229,255,${Math.min(opacity, 0.75)})`;
+            ctx!.lineWidth = t * 0.9;
             ctx!.moveTo(nodes[i].x, nodes[i].y);
             ctx!.lineTo(nodes[j].x, nodes[j].y);
             ctx!.stroke();
@@ -113,11 +142,26 @@ export function HeroCanvas() {
         }
       }
 
-      // Draw nodes
+      // Draw nodes with glow
       for (const node of nodes) {
+        // Outer soft glow
+        const glowR = node.radius * 5;
+        const grd = ctx!.createRadialGradient(
+          node.x, node.y, 0,
+          node.x, node.y, glowR
+        );
+        grd.addColorStop(0, `rgba(0,229,255,${node.alpha * 0.45})`);
+        grd.addColorStop(0.5, `rgba(0,229,255,${node.alpha * 0.1})`);
+        grd.addColorStop(1, 'rgba(0,229,255,0)');
+        ctx!.beginPath();
+        ctx!.arc(node.x, node.y, glowR, 0, Math.PI * 2);
+        ctx!.fillStyle = grd;
+        ctx!.fill();
+
+        // Core dot
         ctx!.beginPath();
         ctx!.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
-        ctx!.fillStyle = `rgba(${CYAN.r}, ${CYAN.g}, ${CYAN.b}, ${node.alpha})`;
+        ctx!.fillStyle = `rgba(0,229,255,${node.alpha})`;
         ctx!.fill();
       }
 
@@ -125,23 +169,30 @@ export function HeroCanvas() {
     }
 
     resize();
-    createNodes();
+    spawnNodes();
     draw();
 
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(canvas);
+    const ro = new ResizeObserver(() => {
+      resize();
+    });
+    ro.observe(canvas);
 
     const onMouseMove = (e: MouseEvent) => {
       const rect = canvas!.getBoundingClientRect();
       mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
+    const onMouseLeave = () => {
+      mouseRef.current = { x: -9999, y: -9999 };
+    };
 
     window.addEventListener('mousemove', onMouseMove, { passive: true });
+    canvas.addEventListener('mouseleave', onMouseLeave);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
-      resizeObserver.disconnect();
+      ro.disconnect();
       window.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('mouseleave', onMouseLeave);
     };
   }, [prefersReducedMotion]);
 
@@ -149,6 +200,7 @@ export function HeroCanvas() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full"
+      style={{ opacity: 0.85 }}
       aria-hidden="true"
     />
   );

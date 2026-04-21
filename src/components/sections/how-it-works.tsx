@@ -102,10 +102,7 @@ export function HowItWorksSection() {
         {/* Steps */}
         <div className="hiw-steps relative">
           {/* Connector line — desktop only */}
-          <div
-            className="hidden lg:block absolute top-[64px] left-[calc(16.67%+1.5rem)] right-[calc(16.67%+1.5rem)] border-t-2 border-dashed border-aura-600 pointer-events-none"
-            aria-hidden="true"
-          />
+          
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {STEPS.map((step, i) => {
@@ -116,13 +113,7 @@ export function HowItWorksSection() {
                   className="hiw-step relative"
                   style={prefersReducedMotion ? {} : { opacity: 0, transform: 'translateY(30px)' }}
                 >
-                  {/* Mobile vertical connector */}
-                  {i < STEPS.length - 1 && (
-                    <div
-                      className="lg:hidden absolute left-6 top-[128px] bottom-[-2rem] w-0.5 border-l-2 border-dashed border-aura-600"
-                      aria-hidden="true"
-                    />
-                  )}
+
 
                   <p
                     className="text-[4rem] font-bold leading-none mb-4 select-none"
