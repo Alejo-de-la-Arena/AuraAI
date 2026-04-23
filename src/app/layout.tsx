@@ -7,6 +7,11 @@ export const metadata: Metadata = {
   title: 'AURA AI — Enterprise AI Integration Platform',
   description:
     'AURA AI connects your existing tools to any LLM in under 30 minutes. Visual workflow builder. Industry templates. Enterprise compliance. No ML team required.',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   openGraph: {
     title: 'AURA AI — Enterprise AI Integration Platform',
     description:

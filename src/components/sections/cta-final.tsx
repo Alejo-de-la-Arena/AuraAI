@@ -50,7 +50,7 @@ export function CtaFinalSection() {
   useGSAP(
     () => {
       if (prefersReducedMotion) {
-        gsap.set('.cta-word', { clipPath: 'inset(0% 0% 0% 0%)', autoAlpha: 1 });
+        gsap.set('.cta-word', { clipPath: 'inset(0% 0% 0% 0%)', opacity: 1 });
         return;
       }
 
@@ -61,7 +61,7 @@ export function CtaFinalSection() {
         onEnter: () => {
           gsap.to('.cta-word', {
             clipPath: 'inset(0% 0% 0% 0%)',
-            autoAlpha: 1,
+            opacity: 1,
             duration: 0.55,
             ease: 'expo.out',
             stagger: 0.08,
@@ -126,7 +126,7 @@ export function CtaFinalSection() {
                     ? {}
                     : {
                         clipPath: 'inset(0% 0% 100% 0%)',
-                        visibility: 'hidden',
+                        opacity: 0,
                       }
                 }
               >
@@ -146,7 +146,7 @@ export function CtaFinalSection() {
                     ? {}
                     : {
                         clipPath: 'inset(0% 0% 100% 0%)',
-                        visibility: 'hidden',
+                        opacity: 0,
                       }
                 }
               >
@@ -163,7 +163,7 @@ export function CtaFinalSection() {
                       ? {}
                       : {
                           clipPath: 'inset(0% 0% 100% 0%)',
-                          visibility: 'hidden',
+                          opacity: 0,
                         }
                   }
                 >

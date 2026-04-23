@@ -80,15 +80,21 @@ function MetricCard({ metric, prefersReducedMotion, shouldCount }: MetricCardPro
   }, [shouldCount, prefersReducedMotion, metric]);
 
   return (
-    <div className="bg-aura-800 border border-aura-700 rounded-xl p-8 text-center">
-      <p
-        className="text-gradient-cyan font-bold leading-none mb-2 tabular-nums"
-        style={{ fontSize: 'clamp(2.5rem, 4vw, 3.5rem)' }}
-      >
-        <span ref={numRef}>{metric.number}</span>
-      </p>
-      <p className="text-body font-semibold text-zinc-50 mb-1">{metric.label}</p>
-      <p className="text-small text-zinc-500">{metric.context}</p>
+    <div className="bg-aura-800 border border-aura-700 rounded-xl p-6 sm:p-7 text-center h-[220px] sm:h-[240px] flex flex-col justify-between">
+      <div className="h-[76px] sm:h-[88px] flex items-center justify-center">
+        <p
+          className="text-gradient-cyan font-bold leading-none tabular-nums whitespace-nowrap"
+          style={{ fontSize: 'clamp(2.25rem, 3.25vw, 3.25rem)' }}
+        >
+          <span ref={numRef}>{metric.number}</span>
+        </p>
+      </div>
+      <div className="h-[58px] flex items-center justify-center">
+        <p className="text-body font-semibold text-zinc-50">{metric.label}</p>
+      </div>
+      <div className="h-[42px] flex items-center justify-center">
+        <p className="text-small text-zinc-500">{metric.context}</p>
+      </div>
     </div>
   );
 }
