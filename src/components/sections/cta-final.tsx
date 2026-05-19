@@ -153,24 +153,30 @@ export function CtaFinalSection() {
                 {word}
               </span>
             ))}
-            <span className="text-gradient-cyan">
-              {HEADLINE_WORDS_L2_GRADIENT.map((word, i) => (
-                <span
-                  key={i}
-                  className="cta-word inline-block mr-[0.25em]"
-                  style={
-                    prefersReducedMotion
-                      ? {}
-                      : {
-                          clipPath: 'inset(0% 0% 100% 0%)',
-                          opacity: 0,
-                        }
-                  }
-                >
-                  {word}
-                </span>
-              ))}
-            </span>
+            {/* El gradiente se aplica DIRECTAMENTE a cada palabra: los
+                spans inline-block no heredan el background-clip del padre,
+                por eso "the right tool." quedaba invisible. */}
+            {HEADLINE_WORDS_L2_GRADIENT.map((word, i) => (
+              <span
+                key={i}
+                className="cta-word inline-block mr-[0.25em]"
+                style={{
+                  background: 'linear-gradient(135deg, #00E5FF 0%, #00FF88 100%)',
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  color: 'transparent',
+                  ...(prefersReducedMotion
+                    ? {}
+                    : {
+                        clipPath: 'inset(0% 0% 100% 0%)',
+                        opacity: 0,
+                      }),
+                }}
+              >
+                {word}
+              </span>
+            ))}
           </span>
         </h2>
 

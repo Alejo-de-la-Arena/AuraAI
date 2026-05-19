@@ -79,7 +79,21 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="border-t border-aura-700 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-small text-zinc-600">© 2026 AURA AI, Inc. All rights reserved.</p>
+          <div className="flex flex-col items-center sm:items-start gap-1">
+            <p className="text-small text-zinc-600">© 2026 AURA AI, Inc. All rights reserved.</p>
+            <a
+              href="#"
+              className="cursor-pointer transition-opacity duration-150 hover:opacity-100"
+              style={{
+                fontSize: '11px',
+                letterSpacing: '0.1em',
+                color: '#00E5FF',
+                opacity: 0.6,
+              }}
+            >
+              Developed by VYZON
+            </a>
+          </div>
           <button className="text-small text-zinc-600 hover:text-zinc-400 transition-colors duration-150">
             English (US) ↗
           </button>
